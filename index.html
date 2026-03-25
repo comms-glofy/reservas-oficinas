@@ -354,6 +354,7 @@
             <label>Hora inicio</label>
             <input type="time" id="horaInicio" />
           </div>
+
           <div class="field">
             <label>Hora fin</label>
             <input type="time" id="horaFin" />
@@ -384,7 +385,7 @@
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzbFB-HDiRE1VqoLbK3Jl6exfLUsidnjcWg4pt9gRv3QOSnnYawZk29P8phKmqdB2cs/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwJMYUw4ag5wQvth6RRCzd5yAivRiMQ_pvRoKL0usNB1KM5L3xKqbzuM62x2s0UYB3U/exec';
 
     let currentWeekStart = getMonday(new Date());
     let currentData = null;
@@ -434,7 +435,6 @@
       try {
         const res = await fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
@@ -449,6 +449,7 @@
         showMessage('Reserva creada con éxito.', 'success');
         await loadWeek();
       } catch (error) {
+        console.error(error);
         showMessage('Ocurrió un error al guardar la reserva.', 'error');
       }
     });
@@ -474,6 +475,25 @@
       return `${day}/${month}/${year}`;
     }
 
+    function formatHour(value) {
+      if (!value) return '';
+
+      const str = String(value).trim();
+
+      if (/^\d{2}:\d{2}$/.test(str)) {
+        return str;
+      }
+
+      const date = new Date(str);
+      if (!isNaN(date)) {
+        const hh = String(date.getHours()).padStart(2, '0');
+        const mm = String(date.getMinutes()).padStart(2, '0');
+        return `${hh}:${mm}`;
+      }
+
+      return str;
+    }
+
     function setWeekLabel(weekDates) {
       const first = weekDates[0]?.date;
       const last = weekDates[weekDates.length - 1]?.date;
@@ -491,6 +511,7 @@
         setWeekLabel(json.weekDates);
         renderGrid(json);
       } catch (error) {
+        console.error(error);
         showMessage('No se pudo cargar la disponibilidad.', 'error');
       }
     }
@@ -508,7 +529,10 @@
         html += `<div class="office-name">${oficina.nombre}</div>`;
 
         weekDates.forEach(day => {
-          const reservasDia = reservas.filter(r => r.oficina_id === oficina.id && r.fecha === day.date);
+          const reservasDia = reservas.filter(r =>
+            String(r.oficina_id).trim().toLowerCase() === String(oficina.id).trim().toLowerCase() &&
+            String(r.fecha).trim() === String(day.date).trim()
+          );
 
           let statusClass = 'free';
           let statusText = 'Libre';
@@ -534,7 +558,7 @@
                 <strong>${r.equipo || 'Reserva'}</strong>
                 ${r.tipo === 'completo'
                   ? 'Día completo'
-                  : `${r.hora_inicio} – ${r.hora_fin}`
+                  : `${formatHour(r.hora_inicio)} – ${formatHour(r.hora_fin)}`
                 }<br>
                 ${r.nombre || ''}
               </div>`;
