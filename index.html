@@ -15,7 +15,7 @@
       --light-gray: #e1e1e1;
       --off-white: #ededed;
       --white: #ffffff;
-      --brand: #CEFF00;
+      --brand: #6E77E1;
       --chip-dark: #2f2f2f;
       --danger: #c44;
       --success: #5b7d00;
@@ -116,6 +116,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  
+
+.grid-head .date {
+  font-size: 12px;
+  opacity: 0.8;
+}
     }
 
     .office-name {
@@ -523,7 +531,10 @@
 
       html += `<div class="grid-head"></div>`;
       weekDates.forEach(day => {
-        html += `<div class="grid-head">${day.label}<br><small>${formatDateDisplay(day.date)}</small></div>`;
+       html += `<div class="grid-head">
+  <div>${day.label}</div>
+  <div class="date">${formatDateDisplay(day.date)}</div>
+</div>`;
       });
 
       oficinas.forEach(oficina => {
