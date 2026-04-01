@@ -461,278 +461,278 @@
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwJMYUw4ag5wQvth6RRCzd5yAivRiMQ_pvRoKL0usNB1KM5L3xKqbzuM62x2s0UYB3U/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwJMYUw4ag5wQvth6RRCzd5yAivRiMQ_pvRoKL0usNB1KM5L3xKqbzuM62x2s0UYB3U/exec';
 
-    let currentWeekStart = getMonday(new Date());
-    let currentData = null;
-    let selectedSlot = null;
+  let currentWeekStart = getMonday(new Date());
+  let currentData = null;
+  let selectedSlot = null;
 
-    const grid = document.getElementById('grid');
-    const weekLabel = document.getElementById('weekLabel');
-    const messageBox = document.getElementById('messageBox');
-    const modalBackdrop = document.getElementById('modalBackdrop');
-    const reservationForm = document.getElementById('reservationForm');
-    const tipoReserva = document.getElementById('tipoReserva');
-    const horarioFields = document.getElementById('horarioFields');
+  const grid = document.getElementById('grid');
+  const weekLabel = document.getElementById('weekLabel');
+  const messageBox = document.getElementById('messageBox');
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const reservationForm = document.getElementById('reservationForm');
+  const tipoReserva = document.getElementById('tipoReserva');
+  const horarioFields = document.getElementById('horarioFields');
 
-    document.getElementById('prevWeekBtn').addEventListener('click', () => {
-      currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-      loadWeek();
-    });
+  document.getElementById('prevWeekBtn').addEventListener('click', () => {
+    currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+    loadWeek();
+  });
 
-    document.getElementById('nextWeekBtn').addEventListener('click', () => {
-      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-      loadWeek();
-    });
+  document.getElementById('nextWeekBtn').addEventListener('click', () => {
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+    loadWeek();
+  });
 
-    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
 
-    tipoReserva.addEventListener('change', () => {
-      horarioFields.classList.toggle('hidden', tipoReserva.value !== 'horario');
-    });
+  tipoReserva.addEventListener('change', () => {
+    horarioFields.classList.toggle('hidden', tipoReserva.value !== 'horario');
+  });
 
-    reservationForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+  reservationForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-      if (!selectedSlot) return;
+    if (!selectedSlot) return;
 
-      const payload = {
-        action: 'reserve',
-        oficina_id: selectedSlot.oficinaId,
-        fecha: selectedSlot.date,
-        tipo: document.getElementById('tipoReserva').value,
-        hora_inicio: document.getElementById('horaInicio').value,
-        hora_fin: document.getElementById('horaFin').value,
-        equipo: document.getElementById('equipo').value.trim(),
-        nombre: document.getElementById('nombre').value.trim(),
-        email: document.getElementById('email').value.trim()
-      };
+    const payload = {
+      action: 'reserve',
+      oficina_id: selectedSlot.oficinaId,
+      fecha: selectedSlot.date,
+      tipo: document.getElementById('tipoReserva').value,
+      hora_inicio: document.getElementById('horaInicio').value,
+      hora_fin: document.getElementById('horaFin').value,
+      equipo: document.getElementById('equipo').value.trim(),
+      nombre: document.getElementById('nombre').value.trim(),
+      email: document.getElementById('email').value.trim()
+    };
 
-      try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
 
-        const json = await res.json();
+      const json = await res.json();
 
-        if (!json.ok) {
-          showMessage(json.message || 'No se pudo crear la reserva.', 'error');
-          return;
-        }
-
-        closeModal();
-        showMessage('Reserva creada con éxito.', 'success');
-        await loadWeek();
-      } catch (error) {
-        console.error(error);
-        showMessage('Ocurrió un error al guardar la reserva.', 'error');
-      }
-    });
-
-    function getMonday(date) {
-      const d = new Date(date);
-      const day = d.getDay();
-      const diff = day === 0 ? -6 : 1 - day;
-      d.setDate(d.getDate() + diff);
-      d.setHours(0, 0, 0, 0);
-      return d;
-    }
-
-    function formatDateISO(date) {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-
-    function formatDateDisplay(dateStr) {
-      const [year, month, day] = dateStr.split('-');
-      return `${day}/${month}/${year}`;
-    }
-
-    function formatHour(value) {
-      if (!value) return '';
-
-      const str = String(value).trim();
-
-      if (/^\d{2}:\d{2}$/.test(str)) {
-        return str;
+      if (!json.ok) {
+        showMessage(json.message || 'No se pudo crear la reserva.', 'error');
+        return;
       }
 
-      const date = new Date(str);
-      if (!isNaN(date)) {
-        const hh = String(date.getHours()).padStart(2, '0');
-        const mm = String(date.getMinutes()).padStart(2, '0');
-        return `${hh}:${mm}`;
-      }
+      closeModal();
+      showMessage('Reserva creada con éxito.', 'success');
+      await loadWeek();
+    } catch (error) {
+      console.error(error);
+      showMessage('Ocurrió un error al guardar la reserva.', 'error');
+    }
+  });
 
+  function getMonday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function formatDateISO(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function formatDateDisplay(dateStr) {
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
+  }
+
+  function formatHour(value) {
+    if (!value) return '';
+
+    const str = String(value).trim();
+
+    if (/^\d{2}:\d{2}$/.test(str)) {
       return str;
     }
 
-    function setWeekLabel(weekDates) {
-      const first = weekDates[0]?.date;
-      const last = weekDates[weekDates.length - 1]?.date;
-      weekLabel.textContent = `Semana del ${formatDateDisplay(first)} al ${formatDateDisplay(last)}`;
+    const date = new Date(str);
+    if (!isNaN(date)) {
+      const hh = String(date.getHours()).padStart(2, '0');
+      const mm = String(date.getMinutes()).padStart(2, '0');
+      return `${hh}:${mm}`;
     }
 
-    async function loadWeek() {
-      const weekStart = formatDateISO(currentWeekStart);
-
-      try {
-        const res = await fetch(`${API_URL}?action=week&weekStart=${weekStart}`);
-        const json = await res.json();
-
-        currentData = json;
-        setWeekLabel(json.weekDates);
-        renderGrid(json);
-      } catch (error) {
-        console.error(error);
-        showMessage('No se pudo cargar la disponibilidad.', 'error');
-      }
-    }
-
-function renderGrid(data) {
-  const { oficinas, weekDates, reservas } = data;
-  let html = '';
-
-  html += `<div class="grid-head"></div>`;
-
-function formatOfficeName(id, nombre) {
-  const map = {
-    'us': { flag: 'https://flagcdn.com/us.svg', label: 'Estados Unidos' },
-    'ar': { flag: 'https://flagcdn.com/ar.svg', label: 'Argentina' },
-    'co': { flag: 'https://flagcdn.com/co.svg', label: 'Colombia' },
-    'pr': { flag: 'https://flagcdn.com/pr.svg', label: 'Puerto Rico' },
-    'ca': { flag: 'https://flagcdn.com/ca.svg', label: 'Canadá' },
-    'es': { flag: 'https://flagcdn.com/es.svg', label: 'España' },
-    'uy': { flag: 'https://flagcdn.com/uy.svg', label: 'Uruguay' },
-  };
-
-  const item = map[String(id).trim().toLowerCase()];
-
-  if (!item) return nombre;
-
-  if (!item.flag) {
-    return `<span class="office-label">${item.label}</span>`;
+    return str;
   }
 
-  return `
-    <span class="office-inline">
-      <img class="office-flag" src="${item.flag}" alt="${item.label}">
-      <span class="office-label">${item.label}</span>
-    </span>
-  `;
-}
+  function formatOfficeText(id, nombre) {
+    const map = {
+      'us': 'Estados Unidos',
+      'ar': 'Argentina',
+      'co': 'Colombia',
+      'pr': 'Puerto Rico',
+      'ca': 'Canadá',
+      'es': 'España',
+      'uy': 'Uruguay',
+      'oi': 'Ofi Interna',
+      'pb': 'Ofi PB'
+    };
 
-function formatOfficeText(id, nombre) {
-  const map = {
-    'us': 'Estados Unidos',
-    'ar': 'Argentina',
-    'co': 'Colombia',
-    'pr': 'Puerto Rico',
-    'ca': 'Canadá',
-    'es': 'España',
-    'uy': 'Uruguay',
-    'oi': 'Ofi Interna',
-    'pb': 'Ofi PB'
-  };
+    return map[String(id).trim().toLowerCase()] || nombre;
+  }
 
-  return map[String(id).trim().toLowerCase()] || nombre;
-}
+  function setWeekLabel(weekDates) {
+    const first = weekDates[0]?.date;
+    const last = weekDates[weekDates.length - 1]?.date;
+    weekLabel.textContent = `Semana del ${formatDateDisplay(first)} al ${formatDateDisplay(last)}`;
+  }
 
-  weekDates.forEach(day => {
-    html += `<div class="grid-head">
-      <div class="day-name">${day.label}</div>
-      <div class="date">${formatDateDisplay(day.date)}</div>
-    </div>`;
-  });
+  async function loadWeek() {
+    const weekStart = formatDateISO(currentWeekStart);
 
-  oficinas.forEach(oficina => {
-  html += `<div class="office-name">${formatOfficeName(oficina.id, oficina.nombre)}</div>`;
+    try {
+      const res = await fetch(`${API_URL}?action=week&weekStart=${weekStart}`);
+      const json = await res.json();
+
+      currentData = json;
+      setWeekLabel(json.weekDates);
+      renderGrid(json);
+    } catch (error) {
+      console.error(error);
+      showMessage('No se pudo cargar la disponibilidad.', 'error');
+    }
+  }
+
+  function renderGrid(data) {
+    const { oficinas, weekDates, reservas } = data;
+    let html = '';
+
+    html += `<div class="grid-head"></div>`;
+
+    function formatOfficeName(id, nombre) {
+      const map = {
+        'us': { flag: 'https://flagcdn.com/us.svg', label: 'Estados Unidos' },
+        'ar': { flag: 'https://flagcdn.com/ar.svg', label: 'Argentina' },
+        'co': { flag: 'https://flagcdn.com/co.svg', label: 'Colombia' },
+        'pr': { flag: 'https://flagcdn.com/pr.svg', label: 'Puerto Rico' },
+        'ca': { flag: 'https://flagcdn.com/ca.svg', label: 'Canadá' },
+        'es': { flag: 'https://flagcdn.com/es.svg', label: 'España' },
+        'uy': { flag: 'https://flagcdn.com/uy.svg', label: 'Uruguay' },
+      };
+
+      const item = map[String(id).trim().toLowerCase()];
+
+      if (!item) return nombre;
+
+      if (!item.flag) {
+        return `<span class="office-label">${item.label}</span>`;
+      }
+
+      return `
+        <span class="office-inline">
+          <img class="office-flag" src="${item.flag}" alt="${item.label}">
+          <span class="office-label">${item.label}</span>
+        </span>
+      `;
+    }
 
     weekDates.forEach(day => {
-      const reservasDia = reservas.filter(r =>
-        String(r.oficina_id).trim().toLowerCase() === String(oficina.id).trim().toLowerCase() &&
-        String(r.fecha).trim() === String(day.date).trim()
-      );
-
-      let statusClass = 'free';
-      let statusText = 'Libre';
-
-      if (reservasDia.some(r => r.tipo === 'completo')) {
-        statusClass = 'full';
-        statusText = 'Ocupación completa';
-      } else if (reservasDia.length > 0) {
-        statusClass = 'partial';
-        statusText = 'Ocupación parcial';
-      }
-
-      html += `<div class="cell ${statusClass}">`;
-      html += `<div class="status ${statusClass}">${statusText}</div>`;
-
-      if (reservasDia.length === 0) {
-        html += `<div class="cell-actions">
-          <button class="cell-button" onclick="openReservationModal('${oficina.id}','${oficina.nombre}','${day.date}')">Reservar</button>
-        </div>`;
-      } else {
-        reservasDia.forEach(r => {
-          html += `<div class="booking-chip">
-            <strong>${r.equipo || 'Reserva'}</strong>
-            <span class="booking-meta">
-              ${r.tipo === 'completo'
-                ? 'Día completo'
-                : `${formatHour(r.hora_inicio)} – ${formatHour(r.hora_fin)}`
-              }
-            </span>
-            <span class="booking-person">${r.nombre || ''}</span>
-          </div>`;
-        });
-
-        const hasFullDay = reservasDia.some(r => r.tipo === 'completo');
-        if (!hasFullDay) {
-          html += `<div class="cell-actions">
-            <button class="cell-button" onclick="openReservationModal('${oficina.id}','${oficina.nombre}','${day.date}')">Agregar horario</button>
-          </div>`;
-        }
-      }
-
-      html += `</div>`;
+      html += `<div class="grid-head">
+        <div class="day-name">${day.label}</div>
+        <div class="date">${formatDateDisplay(day.date)}</div>
+      </div>`;
     });
-  });
 
-  grid.innerHTML = html;
-}
+    oficinas.forEach(oficina => {
+      html += `<div class="office-name">${formatOfficeName(oficina.id, oficina.nombre)}</div>`;
 
-    function openReservationModal(oficinaId, oficinaNombre, date) {
-      selectedSlot = { oficinaId, oficinaNombre, date };
+      weekDates.forEach(day => {
+        const reservasDia = reservas.filter(r =>
+          String(r.oficina_id).trim().toLowerCase() === String(oficina.id).trim().toLowerCase() &&
+          String(r.fecha).trim() === String(day.date).trim()
+        );
 
-      document.getElementById('oficinaNombre').value = formatOfficeText(oficinaId, oficinaNombre);
-      document.getElementById('fechaReservaVisible').value = formatDateDisplay(date);
-      document.getElementById('modalMeta').textContent = `Reservá ${oficinaNombre} para el ${formatDateDisplay(date)}.`;
+        let statusClass = 'free';
+        let statusText = 'Libre';
 
-      reservationForm.reset();
-      document.getElementById('tipoReserva').value = 'completo';
-      horarioFields.classList.add('hidden');
-      modalBackdrop.classList.add('show');
-    }
+        if (reservasDia.some(r => r.tipo === 'completo')) {
+          statusClass = 'full';
+          statusText = 'Ocupación completa';
+        } else if (reservasDia.length > 0) {
+          statusClass = 'partial';
+          statusText = 'Ocupación parcial';
+        }
 
-    function closeModal() {
-      selectedSlot = null;
-      modalBackdrop.classList.remove('show');
-    }
+        html += `<div class="cell ${statusClass}">`;
+        html += `<div class="status ${statusClass}">${statusText}</div>`;
 
-    function showMessage(text, type) {
-      messageBox.textContent = text;
-      messageBox.className = `message show ${type}`;
-      setTimeout(() => {
-        messageBox.className = 'message';
-      }, 4500);
-    }
+        if (reservasDia.length === 0) {
+          html += `<div class="cell-actions">
+            <button class="cell-button" onclick="openReservationModal('${oficina.id}','${oficina.nombre}','${day.date}')">Reservar</button>
+          </div>`;
+        } else {
+          reservasDia.forEach(r => {
+            html += `<div class="booking-chip">
+              <strong>${r.equipo || 'Reserva'}</strong>
+              <span class="booking-meta">
+                ${r.tipo === 'completo'
+                  ? 'Día completo'
+                  : `${formatHour(r.hora_inicio)} – ${formatHour(r.hora_fin)}`
+                }
+              </span>
+              <span class="booking-person">${r.nombre || ''}</span>
+            </div>`;
+          });
 
-    loadWeek();
+          const hasFullDay = reservasDia.some(r => r.tipo === 'completo');
+          if (!hasFullDay) {
+            html += `<div class="cell-actions">
+              <button class="cell-button" onclick="openReservationModal('${oficina.id}','${oficina.nombre}','${day.date}')">Agregar horario</button>
+            </div>`;
+          }
+        }
 
-    window.openReservationModal = openReservationModal;
-  </script>
+        html += `</div>`;
+      });
+    });
+
+    grid.innerHTML = html;
+  }
+
+  function openReservationModal(oficinaId, oficinaNombre, date) {
+    selectedSlot = { oficinaId, oficinaNombre, date };
+
+    document.getElementById('oficinaNombre').value = formatOfficeText(oficinaId, oficinaNombre);
+    document.getElementById('fechaReservaVisible').value = formatDateDisplay(date);
+    document.getElementById('modalMeta').textContent = `Reservá ${oficinaNombre} para el ${formatDateDisplay(date)}.`;
+
+    reservationForm.reset();
+    document.getElementById('tipoReserva').value = 'completo';
+    horarioFields.classList.add('hidden');
+    modalBackdrop.classList.add('show');
+  }
+
+  function closeModal() {
+    selectedSlot = null;
+    modalBackdrop.classList.remove('show');
+  }
+
+  function showMessage(text, type) {
+    messageBox.textContent = text;
+    messageBox.className = `message show ${type}`;
+    setTimeout(() => {
+      messageBox.className = 'message';
+    }, 4500);
+  }
+
+  loadWeek();
+
+  window.openReservationModal = openReservationModal;
+</script>
 </body>
 </html>
