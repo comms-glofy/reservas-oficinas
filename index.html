@@ -242,6 +242,23 @@
     transition: background .18s ease, color .18s ease, border-color .18s ease;
   }
 
+  .delete-booking-btn {
+  margin-top: 10px;
+  background: transparent;
+  color: #ffb3b3;
+  border: 1px solid rgba(255, 179, 179, .45);
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-booking-btn:hover {
+  background: rgba(255, 179, 179, .12);
+}
+
   .booking-delete:hover {
     background: rgba(255,255,255,.08);
     color: #fff;
@@ -439,15 +456,6 @@
       <p id="modalMeta">Completá los datos para reservar este espacio.</p>
 
       <form id="reservationForm" class="form-grid">
-        <div class="field">
-          <label>Oficina</label>
-          <input type="text" id="oficinaNombre" disabled />
-        </div>
-
-        <div class="field">
-          <label>Fecha</label>
-          <input type="text" id="fechaReservaVisible" disabled />
-        </div>
 
         <div class="field">
           <label>Tipo de reserva</label>
@@ -576,7 +584,8 @@
       }
 
       closeModal();
-      showMessage('Reserva creada con éxito.', 'success');
+      alert('Reserva creada con éxito. Refrescá la página para verla completada.');
+window.location.reload();
       await loadWeek();
     } catch (error) {
       console.error(error);
@@ -666,110 +675,103 @@
     }
   }
 
-  function renderGrid(data) {
-    const { oficinas, weekDates, reservas } = data;
-    let html = '';
+ function renderGrid(data) {
+  const { oficinas, weekDates, reservas } = data;
+  let html = '';
 
-    html += `<div class="grid-head"></div>`;
+  html += `<div class="grid-head"></div>`;
 
-    function formatOfficeName(id, nombre) {
-      const map = {
-        'us': { flag: 'https://flagcdn.com/us.svg', label: 'Estados Unidos' },
-        'ar': { flag: 'https://flagcdn.com/ar.svg', label: 'Argentina' },
-        'co': { flag: 'https://flagcdn.com/co.svg', label: 'Colombia' },
-        'pr': { flag: 'https://flagcdn.com/pr.svg', label: 'Puerto Rico' },
-        'ca': { flag: 'https://flagcdn.com/ca.svg', label: 'Canadá' },
-        'es': { flag: 'https://flagcdn.com/es.svg', label: 'España' },
-        'uy': { flag: 'https://flagcdn.com/uy.svg', label: 'Uruguay' },
-      };
+  function formatOfficeName(id, nombre) {
+    const map = {
+      'us': { flag: 'https://flagcdn.com/us.svg', label: 'Estados Unidos' },
+      'ar': { flag: 'https://flagcdn.com/ar.svg', label: 'Argentina' },
+      'co': { flag: 'https://flagcdn.com/co.svg', label: 'Colombia' },
+      'pr': { flag: 'https://flagcdn.com/pr.svg', label: 'Puerto Rico' },
+      'ca': { flag: 'https://flagcdn.com/ca.svg', label: 'Canadá' },
+      'es': { flag: 'https://flagcdn.com/es.svg', label: 'España' },
+      'uy': { flag: 'https://flagcdn.com/uy.svg', label: 'Uruguay' }
+    };
 
-      const item = map[String(id).trim().toLowerCase()];
+    const item = map[String(id).trim().toLowerCase()];
+    if (!item) return nombre;
 
-      if (!item) return nombre;
-
-      if (!item.flag) {
-        return `<span class="office-label">${item.label}</span>`;
-      }
-
-      return `
-        <span class="office-inline">
-          <img class="office-flag" src="${item.flag}" alt="${item.label}">
-          <span class="office-label">${item.label}</span>
-        </span>
-      `;
-    }
-
-    weekDates.forEach(day => {
-      html += `<div class="grid-head">
-        <div class="day-name">${day.label}</div>
-        <div class="date">${formatDateDisplay(day.date)}</div>
-      </div>`;
-    });
-
-    oficinas.forEach(oficina => {
-      html += `<div class="office-name">${formatOfficeName(oficina.id, oficina.nombre)}</div>`;
-
-      weekDates.forEach(day => {
-        const reservasDia = reservas.filter(r =>
-          String(r.oficina_id).trim().toLowerCase() === String(oficina.id).trim().toLowerCase() &&
-          String(r.fecha).trim() === String(day.date).trim()
-        );
-
-        let statusClass = 'free';
-        let statusText = 'Libre';
-
-        if (reservasDia.some(r => r.tipo === 'completo')) {
-          statusClass = 'full';
-          statusText = 'Ocupación completa';
-        } else if (reservasDia.length > 0) {
-          statusClass = 'partial';
-          statusText = 'Ocupación parcial';
-        }
-
-        html += `<div class="cell ${statusClass}">`;
-        html += `<div class="status ${statusClass}">${statusText}</div>`;
-
-        if (reservasDia.length === 0) {
-          html += `<div class="cell-actions">
-            <button class="cell-button" onclick="openReservationModal('${oficina.id}','${oficina.nombre}','${day.date}')">Reservar</button>
-          </div>`;
-        } else {
-          reservasDia.forEach(r => {
-            const isOwnReservation = String(r.owner_token || '').trim() === getOwnerToken();
-
-            html += `<div class="booking-chip">
-              <div class="booking-chip-top">
-                <strong>${r.equipo || 'Reserva'}</strong>
-                ${isOwnReservation
-                  ? `<button class="booking-delete" onclick="cancelReservation('${r.id}')">Eliminar</button>`
-                  : ''
-                }
-              </div>
-              <span class="booking-meta">
-                ${r.tipo === 'completo'
-                  ? 'Día completo'
-                  : `${formatHour(r.hora_inicio)} – ${formatHour(r.hora_fin)}`
-                }
-              </span>
-              <span class="booking-person">${r.nombre || ''}</span>
-            </div>`;
-          });
-
-          const hasFullDay = reservasDia.some(r => r.tipo === 'completo');
-          if (!hasFullDay) {
-            html += `<div class="cell-actions">
-              <button class="cell-button" onclick="openReservationModal('${oficina.id}','${oficina.nombre}','${day.date}')">Agregar horario</button>
-            </div>`;
-          }
-        }
-
-        html += `</div>`;
-      });
-    });
-
-    grid.innerHTML = html;
+    return `
+      <span class="office-inline">
+        <img class="office-flag" src="${item.flag}" alt="${item.label}">
+        <span class="office-label">${item.label}</span>
+      </span>
+    `;
   }
 
+  weekDates.forEach(day => {
+    html += `<div class="grid-head">
+      <div class="day-name">${day.label}</div>
+      <div class="date">${formatDateDisplay(day.date)}</div>
+    </div>`;
+  });
+
+  oficinas.forEach(oficina => {
+    html += `<div class="office-name">${formatOfficeName(oficina.id, oficina.nombre)}</div>`;
+
+    weekDates.forEach(day => {
+      const reservasDia = reservas.filter(r =>
+        String(r.oficina_id).trim().toLowerCase() === String(oficina.id).trim().toLowerCase() &&
+        String(r.fecha).trim() === String(day.date).trim()
+      );
+
+      let statusClass = 'free';
+      let statusText = 'Libre';
+
+      if (reservasDia.some(r => r.tipo === 'completo')) {
+        statusClass = 'full';
+        statusText = 'Ocupación completa';
+      } else if (reservasDia.length > 0) {
+        statusClass = 'partial';
+        statusText = 'Ocupación parcial';
+      }
+
+      html += `<div class="cell ${statusClass}">`;
+      html += `<div class="status ${statusClass}">${statusText}</div>`;
+
+      if (reservasDia.length === 0) {
+        html += `<div class="cell-actions">
+          <button class="cell-button" onclick="openReservationModal('${oficina.id}','${oficina.nombre}','${day.date}')">Reservar</button>
+        </div>`;
+      } else {
+        reservasDia.forEach(r => {
+          const isOwnReservation = String(r.owner_token || '').trim() === getOwnerToken();
+
+          html += `<div class="booking-chip">
+            <strong>${r.equipo || 'Reserva'}</strong>
+            <span class="booking-meta">
+              ${r.tipo === 'completo'
+                ? 'Día completo'
+                : `${formatHour(r.hora_inicio)} – ${formatHour(r.hora_fin)}`
+              }
+            </span>
+            <span class="booking-person">${r.nombre || ''}</span>
+            ${isOwnReservation
+              ? `<button class="delete-booking-btn" onclick="cancelReservation('${r.id}')">Eliminar reserva</button>`
+              : ''
+            }
+          </div>`;
+        });
+
+        const hasFullDay = reservasDia.some(r => r.tipo === 'completo');
+
+        if (!hasFullDay) {
+          html += `<div class="cell-actions">
+            <button class="cell-button" onclick="openReservationModal('${oficina.id}','${oficina.nombre}','${day.date}')">Agregar horario</button>
+          </div>`;
+        }
+      }
+
+      html += `</div>`;
+    });
+  });
+
+  grid.innerHTML = html;
+}
 
   async function cancelReservation(reservationId) {
     if (!reservationId) return;
@@ -806,8 +808,6 @@
   function openReservationModal(oficinaId, oficinaNombre, date) {
     selectedSlot = { oficinaId, oficinaNombre, date };
 
-    document.getElementById('oficinaNombre').value = formatOfficeText(oficinaId, oficinaNombre);
-    document.getElementById('fechaReservaVisible').value = formatDateDisplay(date);
     document.getElementById('modalMeta').textContent = `Reservá ${oficinaNombre} para el ${formatDateDisplay(date)}.`;
 
     reservationForm.reset();
@@ -828,6 +828,9 @@
       messageBox.className = 'message';
     }, 4500);
   }
+
+
+window.cancelReservation = cancelReservation;
 
   loadWeek();
 
