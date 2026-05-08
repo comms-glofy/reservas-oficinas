@@ -619,23 +619,36 @@ window.location.reload();
   }
 
   function formatHour(value) {
-    if (!value) return '';
+  if (!value) return '';
 
-    const str = String(value).trim();
+  let str = String(value).trim();
 
-    if (/^\d{2}:\d{2}$/.test(str)) {
-      return str;
-    }
-
-    const date = new Date(str);
-    if (!isNaN(date)) {
-      const hh = String(date.getHours()).padStart(2, '0');
-      const mm = String(date.getMinutes()).padStart(2, '0');
-      return `${hh}:${mm}`;
-    }
-
-    return str;
+  if (str.startsWith("'")) {
+    str = str.slice(1);
   }
+
+  const match = str.match(/(\d{1,2}):(\d{2})/);
+
+  if (!match) return str;
+
+  let h = Number(match[1]);
+  let m = Number(match[2]);
+
+  if (m % 10 === 9) {
+    m += 1;
+  }
+
+  if (m >= 60) {
+    h += 1;
+    m = 0;
+  }
+
+  if (h >= 24) {
+    h = 0;
+  }
+
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
 
   function formatOfficeText(id, nombre) {
     const map = {
@@ -750,10 +763,7 @@ window.location.reload();
               }
             </span>
             <span class="booking-person">${r.nombre || ''}</span>
-            ${isOwnReservation
-              ? `<button class="delete-booking-btn" onclick="cancelReservation('${r.id}')">Eliminar reserva</button>`
-              : ''
-            }
+<button class="delete-booking-btn" onclick="cancelReservation('${r.id}')">Cancelar reserva</button>
           </div>`;
         });
 
@@ -773,37 +783,43 @@ window.location.reload();
   grid.innerHTML = html;
 }
 
-  async function cancelReservation(reservationId) {
-    if (!reservationId) return;
+async function cancelReservation(reservationId) {
+  if (!reservationId) return;
 
-    const confirmDelete = window.confirm('¿Querés eliminar esta reserva?');
+  const email = window.prompt('Ingresá el email con el que se creó esta reserva para poder cancelarla.');
 
-    if (!confirmDelete) return;
+  if (!email) return;
 
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'cancel',
-          id: reservationId,
-          owner_token: getOwnerToken()
-        })
-      });
+  const confirmDelete = window.confirm('¿Querés cancelar esta reserva?');
 
-      const json = await res.json();
+  if (!confirmDelete) return;
 
-      if (!json.ok) {
-        showMessage(json.message || 'No se pudo eliminar la reserva.', 'error');
-        return;
-      }
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'cancel',
+        id: reservationId,
+        email: email.trim().toLowerCase()
+      })
+    });
 
-      showMessage('Reserva eliminada con éxito.', 'success');
-      await loadWeek();
-    } catch (error) {
-      console.error(error);
-      showMessage('Ocurrió un error al eliminar la reserva.', 'error');
+    const json = await res.json();
+
+    if (!json.ok) {
+      alert(json.message || 'No se pudo cancelar la reserva.');
+      return;
     }
+
+    alert('Reserva cancelada con éxito. La página se actualizará.');
+    window.location.reload();
+  } catch (error) {
+    console.error(error);
+    alert('Ocurrió un error al cancelar la reserva.');
   }
+}
+
+window.cancelReservation = cancelReservation;
 
   function openReservationModal(oficinaId, oficinaNombre, date) {
     selectedSlot = { oficinaId, oficinaNombre, date };
