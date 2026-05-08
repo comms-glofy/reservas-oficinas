@@ -221,6 +221,38 @@
       0 8px 18px rgba(0,0,0,.16);
   }
 
+
+  .booking-chip-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .booking-delete {
+    background: transparent;
+    color: rgba(255,255,255,.75);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease, border-color .18s ease;
+  }
+
+  .booking-delete:hover {
+    background: rgba(255,255,255,.08);
+    color: #fff;
+    border-color: rgba(255,255,255,.35);
+  }
+
+  .booking-delete:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+  }
+
   .booking-chip strong {
     display: block;
     margin-bottom: 6px;
@@ -466,6 +498,20 @@
   let currentWeekStart = getMonday(new Date());
   let currentData = null;
   let selectedSlot = null;
+  let isSubmitting = false;
+  const OWNER_TOKEN_KEY = 'office_booking_owner_token';
+
+  function getOwnerToken() {
+    let token = localStorage.getItem(OWNER_TOKEN_KEY);
+
+    if (!token) {
+      token = 'owner_' + crypto.randomUUID();
+      localStorage.setItem(OWNER_TOKEN_KEY, token);
+    }
+
+    return token;
+  }
+
 
   const grid = document.getElementById('grid');
   const weekLabel = document.getElementById('weekLabel');
@@ -494,7 +540,14 @@
   reservationForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    if (isSubmitting) return;
     if (!selectedSlot) return;
+
+    isSubmitting = true;
+
+    const submitBtn = reservationForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Procesando...';
 
     const payload = {
       action: 'reserve',
@@ -505,7 +558,8 @@
       hora_fin: document.getElementById('horaFin').value,
       equipo: document.getElementById('equipo').value.trim(),
       nombre: document.getElementById('nombre').value.trim(),
-      email: document.getElementById('email').value.trim()
+      email: document.getElementById('email').value.trim(),
+      owner_token: getOwnerToken()
     };
 
     try {
@@ -527,6 +581,10 @@
     } catch (error) {
       console.error(error);
       showMessage('Ocurrió un error al guardar la reserva.', 'error');
+    } finally {
+      isSubmitting = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Confirmar reserva';
     }
   });
 
@@ -677,8 +735,16 @@
           </div>`;
         } else {
           reservasDia.forEach(r => {
+            const isOwnReservation = String(r.owner_token || '').trim() === getOwnerToken();
+
             html += `<div class="booking-chip">
-              <strong>${r.equipo || 'Reserva'}</strong>
+              <div class="booking-chip-top">
+                <strong>${r.equipo || 'Reserva'}</strong>
+                ${isOwnReservation
+                  ? `<button class="booking-delete" onclick="cancelReservation('${r.id}')">Eliminar</button>`
+                  : ''
+                }
+              </div>
               <span class="booking-meta">
                 ${r.tipo === 'completo'
                   ? 'Día completo'
@@ -702,6 +768,39 @@
     });
 
     grid.innerHTML = html;
+  }
+
+
+  async function cancelReservation(reservationId) {
+    if (!reservationId) return;
+
+    const confirmDelete = window.confirm('¿Querés eliminar esta reserva?');
+
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'cancel',
+          id: reservationId,
+          owner_token: getOwnerToken()
+        })
+      });
+
+      const json = await res.json();
+
+      if (!json.ok) {
+        showMessage(json.message || 'No se pudo eliminar la reserva.', 'error');
+        return;
+      }
+
+      showMessage('Reserva eliminada con éxito.', 'success');
+      await loadWeek();
+    } catch (error) {
+      console.error(error);
+      showMessage('Ocurrió un error al eliminar la reserva.', 'error');
+    }
   }
 
   function openReservationModal(oficinaId, oficinaNombre, date) {
@@ -733,6 +832,7 @@
   loadWeek();
 
   window.openReservationModal = openReservationModal;
+  window.cancelReservation = cancelReservation;
 </script>
 </body>
 </html>
